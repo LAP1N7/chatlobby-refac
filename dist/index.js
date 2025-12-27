@@ -3181,13 +3181,14 @@ ${message}` : message;
         if (document.getElementById("st-chatlobby-sidebar-btn")) return true;
         const btn = document.createElement("div");
         btn.id = "st-chatlobby-sidebar-btn";
-        btn.className = "st-sidebar-item";
-        btn.title = "Chat Lobby";
+        btn.className = "drawer st-moved-drawer";
         btn.innerHTML = `
-                <i class="fa-solid fa-comments" style="color: inherit;"></i>
-                <span class="st-sidebar-label">Chat Lobby</span>
+                <div class="drawer-toggle">
+                    <div class="drawer-icon fa-solid fa-comments" title="Chat Lobby"></div>
+                    <span class="st-sidebar-label">Chat Lobby</span>
+                </div>
             `;
-        btn.addEventListener("click", () => openLobby());
+        btn.querySelector(".drawer-toggle").addEventListener("click", () => openLobby());
         container.appendChild(btn);
         return true;
       };
