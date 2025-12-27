@@ -3184,7 +3184,7 @@ ${message}` : message;
         btn.className = "drawer st-moved-drawer";
         btn.innerHTML = `
                 <div class="drawer-toggle">
-                    <div class="drawer-icon fa-solid fa-comments" title="Chat Lobby"></div>
+                    <div class="drawer-icon fa-solid fa-comments closedIcon" title="Chat Lobby"></div>
                     <span class="st-sidebar-label">Chat Lobby</span>
                 </div>
             `;
