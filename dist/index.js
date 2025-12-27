@@ -1642,6 +1642,46 @@ ${message}` : message;
   init_store();
   init_textUtils();
   init_eventHelpers();
+
+  // src/utils/drawerHelper.js
+  function openDrawerSafely(drawerId) {
+    const drawer = document.getElementById(drawerId);
+    if (!drawer) {
+      console.warn(`[ChatLobby] Drawer not found: ${drawerId}`);
+      return false;
+    }
+    const drawerContent = drawer.querySelector(".drawer-content");
+    const drawerIcon = drawer.querySelector(".drawer-icon");
+    if (!drawerContent) {
+      console.warn(`[ChatLobby] Drawer content not found in: ${drawerId}`);
+      return false;
+    }
+    if (drawerContent.classList.contains("openDrawer")) {
+      return true;
+    }
+    document.querySelectorAll(".drawer-content.openDrawer").forEach((el) => {
+      if (el !== drawerContent) {
+        el.classList.remove("openDrawer");
+        el.classList.add("closedDrawer");
+      }
+    });
+    document.querySelectorAll(".drawer-icon.openIcon").forEach((el) => {
+      if (el !== drawerIcon) {
+        el.classList.remove("openIcon");
+        el.classList.add("closedIcon");
+      }
+    });
+    drawerContent.classList.remove("closedDrawer");
+    drawerContent.classList.add("openDrawer");
+    if (drawerIcon) {
+      drawerIcon.classList.remove("closedIcon");
+      drawerIcon.classList.add("openIcon");
+    }
+    drawer.setAttribute("data-st-open", "true");
+    return true;
+  }
+
+  // src/ui/personaBar.js
   init_notifications();
   init_config();
   async function renderPersonaBar() {
@@ -1766,20 +1806,8 @@ ${message}` : message;
     if (fab) fab.style.display = "flex";
     store.setLobbyOpen(false);
     setTimeout(() => {
-      const personaDrawer = document.getElementById("persona-management-button");
-      if (!personaDrawer) {
-        console.warn("[PersonaBar] Persona management button not found");
-        showToast("\uD398\uB974\uC18C\uB098 \uAD00\uB9AC \uBC84\uD2BC\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", "warning");
-        return;
-      }
-      const drawerIcon = personaDrawer.querySelector(".drawer-icon");
-      if (drawerIcon) {
-        if (!drawerIcon.classList.contains("openIcon")) {
-          drawerIcon.click();
-        } else {
-        }
-      } else {
-        personaDrawer.click();
+      if (!openDrawerSafely("persona-management-button")) {
+        showToast("\uD398\uB974\uC18C\uB098 \uAD00\uB9AC\uB97C \uC5F4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", "warning");
       }
     }, CONFIG.timing.menuCloseDelay);
   }
@@ -3042,10 +3070,10 @@ ${message}` : message;
       }, 500);
     }
     async function handleAddPersona() {
-      const personaDrawer = document.getElementById("persona-management-button");
-      const drawerIcon = personaDrawer?.querySelector(".drawer-icon");
-      if (!drawerIcon) return;
-      drawerIcon.click();
+      if (!openDrawerSafely("persona-management-button")) {
+        showToast("\uD398\uB974\uC18C\uB098 \uAD00\uB9AC\uB97C \uC5F4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.", "error");
+        return;
+      }
       const createBtn = await waitForElement("#create_dummy_persona", 2e3);
       if (createBtn) {
         createBtn.click();
@@ -3093,11 +3121,13 @@ ${message}` : message;
           console.warn("[ChatLobby] Character selection timeout");
         }
       }
-      const rightNavIcon = document.getElementById("rightNavDrawerIcon");
-      if (rightNavIcon) {
-        rightNavIcon.click();
-      } else {
-        console.warn("[ChatLobby] rightNavDrawerIcon not found");
+      if (!openDrawerSafely("right-nav-panel")) {
+        const rightNavIcon = document.getElementById("rightNavDrawerIcon");
+        if (rightNavIcon) {
+          rightNavIcon.click();
+        } else {
+          console.warn("[ChatLobby] Could not open character drawer");
+        }
       }
     }
     function handleOpenCharSettings() {

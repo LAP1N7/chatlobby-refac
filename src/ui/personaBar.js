@@ -7,6 +7,7 @@ import { cache } from '../data/cache.js';
 import { store } from '../data/store.js';
 import { escapeHtml } from '../utils/textUtils.js';
 import { createTouchClickHandler } from '../utils/eventHelpers.js';
+import { openDrawerSafely } from '../utils/drawerHelper.js';
 import { showToast, showConfirm } from './notifications.js';
 import { CONFIG } from '../config.js';
 
@@ -197,25 +198,10 @@ function openPersonaManagement() {
     if (fab) fab.style.display = 'flex';
     store.setLobbyOpen(false);
     
-    // 페르소나 관리 drawer 열기
+    // 페르소나 관리 drawer 열기 (CustomTheme 호환)
     setTimeout(() => {
-        const personaDrawer = document.getElementById('persona-management-button');
-        if (!personaDrawer) {
-            console.warn('[PersonaBar] Persona management button not found');
-            showToast('페르소나 관리 버튼을 찾을 수 없습니다.', 'warning');
-            return;
-        }
-        
-        const drawerIcon = personaDrawer.querySelector('.drawer-icon');
-        if (drawerIcon) {
-            // drawer가 닫혀있을 때만 클릭
-            if (!drawerIcon.classList.contains('openIcon')) {
-                drawerIcon.click();
-            } else {
-            }
-        } else {
-            // drawer-icon이 없으면 버튼 자체를 클릭
-            personaDrawer.click();
+        if (!openDrawerSafely('persona-management-button')) {
+            showToast('페르소나 관리를 열 수 없습니다.', 'warning');
         }
     }, CONFIG.timing.menuCloseDelay);
 }

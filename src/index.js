@@ -17,6 +17,7 @@ import { showToast } from './ui/notifications.js';
 import { debounce, isMobile } from './utils/eventHelpers.js';
 import { waitFor, waitForCharacterSelect, waitForElement } from './utils/waitFor.js';
 import { intervalManager } from './utils/intervalManager.js';
+import { openDrawerSafely } from './utils/drawerHelper.js';
 
 (function() {
     'use strict';
@@ -557,12 +558,11 @@ import { intervalManager } from './utils/intervalManager.js';
      * 사용자가 이름 입력 후 확인하면 드로어가 닫히므로 그때 리렌더
      */
     async function handleAddPersona() {
-        // 드로어 열기
-        const personaDrawer = document.getElementById('persona-management-button');
-        const drawerIcon = personaDrawer?.querySelector('.drawer-icon');
-        if (!drawerIcon) return;
-        
-        drawerIcon.click();
+        // 드로어 열기 (CustomTheme 호환 - 클릭 대신 클래스 조작)
+        if (!openDrawerSafely('persona-management-button')) {
+            showToast('페르소나 관리를 열 수 없습니다.', 'error');
+            return;
+        }
         
         // 버튼이 나타날 때까지 대기
         const createBtn = await waitForElement('#create_dummy_persona', 2000);
@@ -638,12 +638,15 @@ import { intervalManager } from './utils/intervalManager.js';
             }
         }
         
-        // 바로 드로어 열기
-        const rightNavIcon = document.getElementById('rightNavDrawerIcon');
-        if (rightNavIcon) {
-            rightNavIcon.click();
-        } else {
-            console.warn('[ChatLobby] rightNavDrawerIcon not found');
+        // 바로 드로어 열기 (CustomTheme 호환 - 클릭 대신 클래스 조작)
+        if (!openDrawerSafely('right-nav-panel')) {
+            // fallback: rightNavDrawerIcon 클릭 시도
+            const rightNavIcon = document.getElementById('rightNavDrawerIcon');
+            if (rightNavIcon) {
+                rightNavIcon.click();
+            } else {
+                console.warn('[ChatLobby] Could not open character drawer');
+            }
         }
     }
     
