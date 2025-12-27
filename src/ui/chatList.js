@@ -400,10 +400,10 @@ function renderChatItem(chat, charAvatar, index) {
     const folderName = folder?.name || '';
     
     const tooltipPreview = truncateText(preview, 500);
-    const safeAvatar = (charAvatar || '').replace(/"/g, '&quot;');
-    const safeFileName = (fileName || '').replace(/"/g, '&quot;');
+    const safeAvatar = escapeHtml(charAvatar || '');
+    const safeFileName = escapeHtml(fileName || '');
     // 툴팁용 전문 (HTML 이스케이프)
-    const safeFullPreview = escapeHtml(tooltipPreview).replace(/"/g, '&quot;');
+    const safeFullPreview = escapeHtml(tooltipPreview);
     
     return `
     <div class="lobby-chat-item ${isFav ? 'is-favorite' : ''}" 

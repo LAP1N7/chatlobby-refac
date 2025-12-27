@@ -117,7 +117,7 @@ async function renderCharacterList(container, characters, searchTerm, sortOverri
 function renderCharacterCard(char, index) {
     const avatarUrl = char.avatar ? `/characters/${encodeURIComponent(char.avatar)}` : '/img/ai4.png';
     const name = char.name || 'Unknown';
-    const safeAvatar = (char.avatar || '').replace(/"/g, '&quot;');
+    const safeAvatar = escapeHtml(char.avatar || '');
     
     const isFav = isFavoriteChar(char);
     // 즐겨찾기 버튼 (클릭 가능)
@@ -129,7 +129,7 @@ function renderCharacterCard(char, index) {
          data-char-avatar="${safeAvatar}" 
          data-is-fav="${isFav}">
         ${favBtn}
-        <img class="lobby-char-avatar" src="${avatarUrl}" alt="${name}" onerror="this.src='/img/ai4.png'">
+        <img class="lobby-char-avatar" src="${avatarUrl}" alt="${escapeHtml(name)}" onerror="this.src='/img/ai4.png'">
         <div class="lobby-char-name">${escapeHtml(name)}</div>
     </div>
     `;

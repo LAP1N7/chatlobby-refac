@@ -514,29 +514,41 @@ import { intervalManager } from './utils/intervalManager.js';
      */
     function handleImportCharacter() {
         const importBtn = document.getElementById('character_import_button');
-        if (importBtn) {
-            // 현재 캐릭터 수 저장
-            const currentCount = api.getCharacters().length;
+        if (!importBtn) return;
+        
+        // 현재 캐릭터 아바타 목록 저장 (숫자만 비교 X)
+        const beforeAvatars = new Set(
+            api.getCharacters().map(c => c.avatar)
+        );
+        
+        importBtn.click();
+        
+        let attempts = 0;
+        const maxAttempts = 10; // 5초 (500ms * 10)
+        
+        const checkInterval = intervalManager.set(async () => {
+            attempts++;
             
-            importBtn.click();
+            const currentChars = api.getCharacters();
+            // 새로운 아바타가 있는지 확인 (더 정확함)
+            const newChar = currentChars.find(c => !beforeAvatars.has(c.avatar));
             
-            // 캐릭터 수 변화 감지 (폴링) - intervalManager 사용
-            const checkInterval = intervalManager.set(async () => {
-                const newCount = api.getCharacters().length;
-                if (newCount > currentCount) {
-                    intervalManager.clear(checkInterval);
-                    cache.invalidate('characters');
-                    if (isLobbyOpen()) {
-                        await renderCharacterGrid(store.searchTerm);
-                    }
-                }
-            }, 500);
-            
-            // 5초 후 타임아웃
-            setTimeout(() => {
+            if (newChar) {
                 intervalManager.clear(checkInterval);
-            }, 5000);
-        }
+                cache.invalidate('characters');
+                if (isLobbyOpen()) {
+                    await renderCharacterGrid(store.searchTerm);
+                }
+                showToast(`"${newChar.name}" 캐릭터가 추가되었습니다!`, 'success');
+                return;
+            }
+            
+            // 타임아웃
+            if (attempts >= maxAttempts) {
+                intervalManager.clear(checkInterval);
+                // 사용자에게 알리지 않음 (취소했을 수도 있으니까)
+            }
+        }, 500);
     }
     
     /**

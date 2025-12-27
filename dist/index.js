@@ -1378,7 +1378,7 @@ ${message}` : message;
   function renderCharacterCard(char, index) {
     const avatarUrl = char.avatar ? `/characters/${encodeURIComponent(char.avatar)}` : "/img/ai4.png";
     const name = char.name || "Unknown";
-    const safeAvatar = (char.avatar || "").replace(/"/g, "&quot;");
+    const safeAvatar = escapeHtml2(char.avatar || "");
     const isFav = isFavoriteChar(char);
     const favBtn = `<button class="char-fav-btn" data-char-avatar="${safeAvatar}" title="\uC990\uACA8\uCC3E\uAE30 \uD1A0\uAE00">${isFav ? "\u2B50" : "\u2606"}</button>`;
     return `
@@ -1387,7 +1387,7 @@ ${message}` : message;
          data-char-avatar="${safeAvatar}" 
          data-is-fav="${isFav}">
         ${favBtn}
-        <img class="lobby-char-avatar" src="${avatarUrl}" alt="${name}" onerror="this.src='/img/ai4.png'">
+        <img class="lobby-char-avatar" src="${avatarUrl}" alt="${escapeHtml2(name)}" onerror="this.src='/img/ai4.png'">
         <div class="lobby-char-name">${escapeHtml2(name)}</div>
     </div>
     `;
@@ -2047,9 +2047,9 @@ ${message}` : message;
     const folder = data.folders.find((f) => f.id === folderId);
     const folderName = folder?.name || "";
     const tooltipPreview = truncateText(preview, 500);
-    const safeAvatar = (charAvatar || "").replace(/"/g, "&quot;");
-    const safeFileName = (fileName || "").replace(/"/g, "&quot;");
-    const safeFullPreview = escapeHtml2(tooltipPreview).replace(/"/g, "&quot;");
+    const safeAvatar = escapeHtml2(charAvatar || "");
+    const safeFileName = escapeHtml2(fileName || "");
+    const safeFullPreview = escapeHtml2(tooltipPreview);
     return `
     <div class="lobby-chat-item ${isFav ? "is-favorite" : ""}" 
          data-file-name="${safeFileName}" 
@@ -3016,23 +3016,30 @@ ${message}` : message;
     }
     function handleImportCharacter() {
       const importBtn = document.getElementById("character_import_button");
-      if (importBtn) {
-        const currentCount = api.getCharacters().length;
-        importBtn.click();
-        const checkInterval = intervalManager.set(async () => {
-          const newCount = api.getCharacters().length;
-          if (newCount > currentCount) {
-            intervalManager.clear(checkInterval);
-            cache.invalidate("characters");
-            if (isLobbyOpen()) {
-              await renderCharacterGrid(store.searchTerm);
-            }
-          }
-        }, 500);
-        setTimeout(() => {
+      if (!importBtn) return;
+      const beforeAvatars = new Set(
+        api.getCharacters().map((c) => c.avatar)
+      );
+      importBtn.click();
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkInterval = intervalManager.set(async () => {
+        attempts++;
+        const currentChars = api.getCharacters();
+        const newChar = currentChars.find((c) => !beforeAvatars.has(c.avatar));
+        if (newChar) {
           intervalManager.clear(checkInterval);
-        }, 5e3);
-      }
+          cache.invalidate("characters");
+          if (isLobbyOpen()) {
+            await renderCharacterGrid(store.searchTerm);
+          }
+          showToast(`"${newChar.name}" \uCE90\uB9AD\uD130\uAC00 \uCD94\uAC00\uB418\uC5C8\uC2B5\uB2C8\uB2E4!`, "success");
+          return;
+        }
+        if (attempts >= maxAttempts) {
+          intervalManager.clear(checkInterval);
+        }
+      }, 500);
     }
     async function handleAddPersona() {
       const personaDrawer = document.getElementById("persona-management-button");
