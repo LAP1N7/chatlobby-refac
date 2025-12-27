@@ -408,6 +408,14 @@ function closeLobbyKeepState() {
     if (container) container.style.display = 'none';
     if (fab) fab.style.display = 'flex';
     
+    // CustomTheme 사이드바 버튼 상태 초기화
+    const sidebarBtn = document.getElementById('st-chatlobby-sidebar-btn');
+    if (sidebarBtn) {
+        const icon = sidebarBtn.querySelector('.drawer-icon');
+        icon?.classList.remove('openIcon');
+        icon?.classList.add('closedIcon');
+    }
+    
     store.setLobbyOpen(false);
     closeChatPanel();
     // 주의: store.reset()을 호출하지 않음 - 상태 유지

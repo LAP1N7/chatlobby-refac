@@ -315,6 +315,14 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
         // 🧹 모든 interval 정리 (메모리 누수 방지)
         intervalManager.clearAll();
         
+        // CustomTheme 사이드바 버튼 상태 초기화
+        const sidebarBtn = document.getElementById('st-chatlobby-sidebar-btn');
+        if (sidebarBtn) {
+            const icon = sidebarBtn.querySelector('.drawer-icon');
+            icon?.classList.remove('openIcon');
+            icon?.classList.add('closedIcon');
+        }
+        
         store.setLobbyOpen(false);
         store.reset(); // 상태 초기화
         closeChatPanel();

@@ -2557,6 +2557,12 @@ ${message}` : message;
     const fab = document.getElementById("chat-lobby-fab");
     if (container) container.style.display = "none";
     if (fab) fab.style.display = "flex";
+    const sidebarBtn = document.getElementById("st-chatlobby-sidebar-btn");
+    if (sidebarBtn) {
+      const icon = sidebarBtn.querySelector(".drawer-icon");
+      icon?.classList.remove("openIcon");
+      icon?.classList.add("closedIcon");
+    }
     store.setLobbyOpen(false);
     closeChatPanel();
   }
@@ -2934,6 +2940,12 @@ ${message}` : message;
       if (container) container.style.display = "none";
       if (fab) fab.style.display = "flex";
       intervalManager.clearAll();
+      const sidebarBtn = document.getElementById("st-chatlobby-sidebar-btn");
+      if (sidebarBtn) {
+        const icon = sidebarBtn.querySelector(".drawer-icon");
+        icon?.classList.remove("openIcon");
+        icon?.classList.add("closedIcon");
+      }
       store.setLobbyOpen(false);
       store.reset();
       closeChatPanel();
