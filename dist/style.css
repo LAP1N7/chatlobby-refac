@@ -1401,3 +1401,10 @@ body.st-custom-theme-active #chat-lobby-fab,
 body.st-menu-layout-hamburger #chat-lobby-fab {
     z-index: 9999 !important;
 }
+
+/* CustomTheme 사이드바 버튼 - openIcon 상태여도 일반 색상 유지 */
+#st-chatlobby-sidebar-btn .drawer-icon.openIcon,
+#st-chatlobby-sidebar-btn .drawer-icon {
+    color: inherit !important;
+    background: none !important;
+}
