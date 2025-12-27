@@ -201,7 +201,11 @@ export async function deleteChat(chatInfo) {
             // 실리 동기화
             const context = api.getContext();
             if (context?.reloadCurrentChat) {
-                try { await context.reloadCurrentChat(); } catch(e) {}
+                try { 
+                    await context.reloadCurrentChat(); 
+                } catch(e) {
+                    console.warn('[ChatLobby] reloadCurrentChat failed:', e);
+                }
             }
             
             showToast('채팅이 삭제되었습니다.', 'success');

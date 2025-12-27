@@ -126,13 +126,20 @@ class SillyTavernAPI {
                 const avatars = await response.json();
                 if (!Array.isArray(avatars)) return [];
                 
-                // 페르소나 이름 가져오기
+                // 페르소나 이름 가져오기 (context 우선, fallback으로 상대경로 import)
                 let personaNames = {};
                 try {
-                    const powerUserModule = await import('../../../../power-user.js');
-                    personaNames = powerUserModule.power_user?.personas || {};
+                    // 우선: SillyTavern context에서 가져오기
+                    const context = this.getContext();
+                    if (context?.power_user?.personas) {
+                        personaNames = context.power_user.personas;
+                    } else {
+                        // fallback: 직접 import (구조 변경 시 터질 수 있음)
+                        const powerUserModule = await import('../../../../power-user.js');
+                        personaNames = powerUserModule.power_user?.personas || {};
+                    }
                 } catch (e) {
-                    console.warn('[API] Could not import power_user:', e.message);
+                    console.warn('[API] Could not get personas from context or import:', e.message);
                 }
                 
                 const personas = avatars.map(avatarId => ({
@@ -174,6 +181,12 @@ class SillyTavernAPI {
      */
     async getCurrentPersona() {
         try {
+            // 우선: context에서 가져오기
+            const context = this.getContext();
+            if (context?.user_avatar) {
+                return context.user_avatar;
+            }
+            // fallback: 직접 import
             const personasModule = await import('../../../../personas.js');
             return personasModule.user_avatar || '';
         } catch (e) {
@@ -189,18 +202,20 @@ class SillyTavernAPI {
      */
     async setPersona(personaKey) {
         try {
+            // 우선: context에서 setUserAvatar 사용
+            const context = this.getContext();
+            if (typeof context?.setUserAvatar === 'function') {
+                await context.setUserAvatar(personaKey);
+                return true;
+            }
+            // fallback: 직접 import
             const personasModule = await import('../../../../personas.js');
             if (typeof personasModule.setUserAvatar === 'function') {
                 await personasModule.setUserAvatar(personaKey);
                 return true;
             }
         } catch (e) {
-            // 폴백
-            const context = this.getContext();
-            if (typeof context?.setUserAvatar === 'function') {
-                await context.setUserAvatar(personaKey);
-                return true;
-            }
+            console.warn('[API] Failed to set persona:', e.message);
         }
         return false;
     }

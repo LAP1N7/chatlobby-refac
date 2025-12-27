@@ -894,10 +894,15 @@ ${message}` : message;
               if (!Array.isArray(avatars)) return [];
               let personaNames = {};
               try {
-                const powerUserModule = await import("../../../../power-user.js");
-                personaNames = powerUserModule.power_user?.personas || {};
+                const context = this.getContext();
+                if (context?.power_user?.personas) {
+                  personaNames = context.power_user.personas;
+                } else {
+                  const powerUserModule = await import("../../../../power-user.js");
+                  personaNames = powerUserModule.power_user?.personas || {};
+                }
               } catch (e) {
-                console.warn("[API] Could not import power_user:", e.message);
+                console.warn("[API] Could not get personas from context or import:", e.message);
               }
               const personas = avatars.map((avatarId) => ({
                 key: avatarId,
@@ -932,6 +937,10 @@ ${message}` : message;
          */
         async getCurrentPersona() {
           try {
+            const context = this.getContext();
+            if (context?.user_avatar) {
+              return context.user_avatar;
+            }
             const personasModule = await import("../../../../personas.js");
             return personasModule.user_avatar || "";
           } catch (e) {
@@ -946,17 +955,18 @@ ${message}` : message;
          */
         async setPersona(personaKey) {
           try {
+            const context = this.getContext();
+            if (typeof context?.setUserAvatar === "function") {
+              await context.setUserAvatar(personaKey);
+              return true;
+            }
             const personasModule = await import("../../../../personas.js");
             if (typeof personasModule.setUserAvatar === "function") {
               await personasModule.setUserAvatar(personaKey);
               return true;
             }
           } catch (e) {
-            const context = this.getContext();
-            if (typeof context?.setUserAvatar === "function") {
-              await context.setUserAvatar(personaKey);
-              return true;
-            }
+            console.warn("[API] Failed to set persona:", e.message);
           }
           return false;
         }
@@ -2418,6 +2428,7 @@ ${message}` : message;
           try {
             await context.reloadCurrentChat();
           } catch (e) {
+            console.warn("[ChatLobby] reloadCurrentChat failed:", e);
           }
         }
         showToast("\uCC44\uD305\uC774 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", "success");
@@ -2774,7 +2785,7 @@ ${message}` : message;
       setupSillyTavernEvents();
       startBackgroundPreload();
       addLobbyToOptionsMenu();
-      setTimeout(() => addToCustomThemeSidebar(), 1e3);
+      setTimeout(() => addToCustomThemeSidebar(), CONFIG.timing.initDelay);
     }
     function setupSillyTavernEvents() {
       const context = window.SillyTavern?.getContext?.();
@@ -2931,7 +2942,10 @@ ${message}` : message;
       await renderPersonaBar();
       await renderCharacterGrid();
     };
+    let eventsInitialized = false;
     function setupEventDelegation() {
+      if (eventsInitialized) return;
+      eventsInitialized = true;
       document.body.addEventListener("click", handleBodyClick);
       document.addEventListener("keydown", handleKeydown);
       const searchInput = document.getElementById("chat-lobby-search-input");

@@ -67,7 +67,7 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
         addLobbyToOptionsMenu();
         
         // CustomTheme 사이드바에 버튼 추가 (있으면)
-        setTimeout(() => addToCustomThemeSidebar(), 1000);
+        setTimeout(() => addToCustomThemeSidebar(), CONFIG.timing.initDelay);
         
     }
     
@@ -331,11 +331,17 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
     // 이벤트 위임 (Event Delegation)
     // ============================================
     
+    // 이벤트 리스너 중복 등록 방지 플래그
+    let eventsInitialized = false;
+    
     /**
      * 이벤트 위임 설정
      * getElementById 대신 상위 컨테이너에서 이벤트를 위임 처리
      */
     function setupEventDelegation() {
+        if (eventsInitialized) return;
+        eventsInitialized = true;
+        
         // FAB 버튼 (document.body에 위임)
         document.body.addEventListener('click', handleBodyClick);
         
