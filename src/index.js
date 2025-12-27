@@ -702,50 +702,54 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
     /**
      * CustomTheme 사이드바/햄버거 메뉴에 Chat Lobby 버튼 추가
      * CustomTheme 확장이 있으면 사이드바와 모바일 메뉴에 버튼 추가
+     * CustomTheme이 UI를 다시 그릴 때를 대비해 주기적으로 체크
      */
     function addToCustomThemeSidebar() {
-        let added = false;
+        const addButtons = () => {
+            // === 햄버거 드롭다운 (모바일) ===
+            const hamburgerDropdown = document.getElementById('st-hamburger-dropdown-content');
+            if (hamburgerDropdown && !document.getElementById('st-chatlobby-hamburger-btn')) {
+                const btn = document.createElement('div');
+                btn.id = 'st-chatlobby-hamburger-btn';
+                btn.className = 'st-dropdown-item';
+                btn.style.cssText = 'color: var(--st-sidebar-icon-color, #999) !important;';
+                btn.innerHTML = `
+                    <i class="fa-solid fa-comments" style="color: inherit !important;"></i>
+                    <span>Chat Lobby</span>
+                `;
+                btn.addEventListener('click', () => {
+                    openLobby();
+                    // 드롭다운 닫기
+                    const dropdown = document.getElementById('st-hamburger-dropdown');
+                    if (dropdown) dropdown.classList.remove('st-dropdown-open');
+                });
+                hamburgerDropdown.appendChild(btn);
+            }
+            
+            // === 사이드바 (PC) ===
+            const sidebarTop = document.getElementById('st-sidebar-top-container');
+            if (sidebarTop && !document.getElementById('st-chatlobby-sidebar-btn')) {
+                const btn = document.createElement('div');
+                btn.id = 'st-chatlobby-sidebar-btn';
+                btn.className = 'st-sidebar-item';
+                btn.title = 'Chat Lobby';
+                btn.style.cssText = 'color: var(--st-sidebar-icon-color, #999) !important;';
+                btn.innerHTML = `
+                    <i class="fa-solid fa-comments" style="color: inherit !important;"></i>
+                    <span class="st-sidebar-label">Chat Lobby</span>
+                `;
+                btn.addEventListener('click', () => openLobby());
+                sidebarTop.appendChild(btn);
+            }
+        };
         
-        // === 햄버거 드롭다운 (모바일) - 먼저 체크 ===
-        const hamburgerDropdown = document.getElementById('st-hamburger-dropdown-content');
-        if (hamburgerDropdown && !document.getElementById('st-chatlobby-hamburger-btn')) {
-            const btn = document.createElement('div');
-            btn.id = 'st-chatlobby-hamburger-btn';
-            btn.className = 'st-dropdown-item';
-            btn.style.color = 'inherit';
-            btn.innerHTML = `
-                <i class="fa-solid fa-comments" style="color: inherit;"></i>
-                <span>Chat Lobby</span>
-            `;
-            btn.addEventListener('click', () => {
-                openLobby();
-                // 드롭다운 닫기
-                const dropdown = document.getElementById('st-hamburger-dropdown');
-                if (dropdown) dropdown.classList.remove('st-dropdown-open');
-            });
-            hamburgerDropdown.appendChild(btn);
-            added = true;
-        }
+        // 처음 실행
+        addButtons();
         
-        // === 사이드바 (PC) ===
-        const sidebarTop = document.getElementById('st-sidebar-top-container');
-        if (sidebarTop && !document.getElementById('st-chatlobby-sidebar-btn')) {
-            const btn = document.createElement('div');
-            btn.id = 'st-chatlobby-sidebar-btn';
-            btn.className = 'st-sidebar-item';
-            btn.title = 'Chat Lobby';
-            btn.style.color = 'inherit';
-            btn.innerHTML = `
-                <i class="fa-solid fa-comments" style="color: inherit;"></i>
-                <span class="st-sidebar-label">Chat Lobby</span>
-            `;
-            btn.addEventListener('click', () => openLobby());
-            sidebarTop.appendChild(btn);
-            added = true;
-        }
+        // 2초마다 체크 (CustomTheme이 사이드바 다시 그릴 때 대비)
+        setInterval(addButtons, 2000);
         
-        return added || document.getElementById('st-chatlobby-sidebar-btn') !== null 
-                     || document.getElementById('st-chatlobby-hamburger-btn') !== null;
+        return true;
     }
 
     // ============================================
