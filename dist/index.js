@@ -2774,6 +2774,7 @@ ${message}` : message;
       setupSillyTavernEvents();
       startBackgroundPreload();
       addLobbyToOptionsMenu();
+      setTimeout(() => addToCustomThemeSidebar(), 1e3);
     }
     function setupSillyTavernEvents() {
       const context = window.SillyTavern?.getContext?.();
@@ -3156,6 +3157,27 @@ ${message}` : message;
         openLobby();
       });
       optionsMenu.insertBefore(lobbyOption, optionsMenu.firstChild);
+    }
+    function addToCustomThemeSidebar() {
+      const sidebar = document.querySelector("#st-custom-sidebar, .st-sidebar, [data-st-sidebar]");
+      if (!sidebar) return false;
+      if (document.getElementById("st-chatlobby-sidebar-btn")) return true;
+      const sidebarTop = sidebar.querySelector(".st-sidebar-top, .sidebar-top, .st-sidebar-items");
+      if (!sidebarTop) return false;
+      const btn = document.createElement("div");
+      btn.id = "st-chatlobby-sidebar-btn";
+      btn.className = "st-sidebar-item";
+      btn.title = "Chat Lobby";
+      btn.innerHTML = `
+            <i class="fa-solid fa-comments"></i>
+            <span class="st-sidebar-label">\uCC44\uD305 \uB85C\uBE44</span>
+        `;
+      btn.style.cssText = "cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 12px;";
+      btn.addEventListener("click", () => {
+        openLobby();
+      });
+      sidebarTop.appendChild(btn);
+      return true;
     }
     async function waitForSillyTavern(maxAttempts = 30, interval = 500) {
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
