@@ -153,23 +153,32 @@ function isFavoriteChar(char) {
 async function sortCharacters(characters, sortOption) {
     
     if (sortOption === 'chats') {
-        // 채팅 수 정렬 - 캐시 없으면 API 호출해서 가져옴
-        const results = await Promise.all(characters.map(async (char) => {
-            // 캐시 먼저 확인
-            let count = cache.get('chatCounts', char.avatar);
-            
-            // 캐시 없으면 API 호출
-            if (typeof count !== 'number') {
-                try {
-                    count = await api.getChatCount(char.avatar);
-                } catch (e) {
-                    console.error('[CharacterGrid] Failed to get chat count for:', char.name, e);
-                    count = 0;
-                }
-            }
-            
-            return { char, count };
-        }));
+        // 채팅 수 정렬 - 배치로 API 호출 (동시 요청 제한)
+        const BATCH_SIZE = 5;
+        const results = [];
+        
+        for (let i = 0; i < characters.length; i += BATCH_SIZE) {
+            const batch = characters.slice(i, i + BATCH_SIZE);
+            const batchResults = await Promise.all(
+                batch.map(async (char) => {
+                    // 캐시 먼저 확인
+                    let count = cache.get('chatCounts', char.avatar);
+                    
+                    // 캐시 없으면 API 호출
+                    if (typeof count !== 'number') {
+                        try {
+                            count = await api.getChatCount(char.avatar);
+                        } catch (e) {
+                            console.error('[CharacterGrid] Failed to get chat count for:', char.name, e);
+                            count = 0;
+                        }
+                    }
+                    
+                    return { char, count };
+                })
+            );
+            results.push(...batchResults);
+        }
         
         results.sort((a, b) => {
             // 1. 즐겨찾기 우선

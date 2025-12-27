@@ -456,6 +456,11 @@ ${message}` : message;
       StorageManager = class {
         constructor() {
           this._data = null;
+          window.addEventListener("storage", (e) => {
+            if (e.key === CONFIG.storageKey) {
+              this._data = null;
+            }
+          });
         }
         /**
          * 데이터 로드 (메모리 캐시 우선)
@@ -1414,18 +1419,26 @@ ${message}` : message;
   }
   async function sortCharacters(characters, sortOption) {
     if (sortOption === "chats") {
-      const results = await Promise.all(characters.map(async (char) => {
-        let count = cache.get("chatCounts", char.avatar);
-        if (typeof count !== "number") {
-          try {
-            count = await api.getChatCount(char.avatar);
-          } catch (e) {
-            console.error("[CharacterGrid] Failed to get chat count for:", char.name, e);
-            count = 0;
-          }
-        }
-        return { char, count };
-      }));
+      const BATCH_SIZE = 5;
+      const results = [];
+      for (let i = 0; i < characters.length; i += BATCH_SIZE) {
+        const batch = characters.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (char) => {
+            let count = cache.get("chatCounts", char.avatar);
+            if (typeof count !== "number") {
+              try {
+                count = await api.getChatCount(char.avatar);
+              } catch (e) {
+                console.error("[CharacterGrid] Failed to get chat count for:", char.name, e);
+                count = 0;
+              }
+            }
+            return { char, count };
+          })
+        );
+        results.push(...batchResults);
+      }
       results.sort((a, b) => {
         if (isFavoriteChar(a.char) !== isFavoriteChar(b.char)) {
           return isFavoriteChar(a.char) ? -1 : 1;

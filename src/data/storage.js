@@ -22,6 +22,13 @@ class StorageManager {
     constructor() {
         /** @type {LobbyData|null} */
         this._data = null; // 메모리 캐시
+        
+        // 다른 탭에서 변경 감지
+        window.addEventListener('storage', (e) => {
+            if (e.key === CONFIG.storageKey) {
+                this._data = null; // 캐시 무효화
+            }
+        });
     }
     
     /**
