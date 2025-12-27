@@ -3159,6 +3159,8 @@ ${message}` : message;
       optionsMenu.insertBefore(lobbyOption, optionsMenu.firstChild);
     }
     function addToCustomThemeSidebar() {
+      if (window._chatLobbyCustomThemeInit) return true;
+      window._chatLobbyCustomThemeInit = true;
       const addSidebarButton = () => {
         const container = document.getElementById("st-sidebar-top-container");
         if (!container) return false;
@@ -3177,8 +3179,8 @@ ${message}` : message;
       };
       const addHamburgerButton = () => {
         const dropdown = document.getElementById("st-hamburger-dropdown-content");
-        if (!dropdown) return;
-        if (document.getElementById("st-chatlobby-hamburger-btn")) return;
+        if (!dropdown) return false;
+        if (document.getElementById("st-chatlobby-hamburger-btn")) return true;
         const btn = document.createElement("div");
         btn.id = "st-chatlobby-hamburger-btn";
         btn.className = "st-dropdown-item";
@@ -3188,10 +3190,27 @@ ${message}` : message;
             `;
         btn.addEventListener("click", () => {
           openLobby();
-          const dropdown2 = document.getElementById("st-hamburger-dropdown");
-          if (dropdown2) dropdown2.classList.remove("st-dropdown-open");
+          document.getElementById("st-hamburger-dropdown")?.classList.remove("st-dropdown-open");
         });
         dropdown.appendChild(btn);
+        return true;
+      };
+      const setupHamburgerObserver = () => {
+        const dropdown = document.getElementById("st-hamburger-dropdown-content");
+        if (!dropdown) {
+          if (!setupHamburgerObserver._attempts) setupHamburgerObserver._attempts = 0;
+          if (++setupHamburgerObserver._attempts < 20) {
+            setTimeout(setupHamburgerObserver, 500);
+          }
+          return;
+        }
+        addHamburgerButton();
+        const observer = new MutationObserver(() => {
+          if (!document.getElementById("st-chatlobby-hamburger-btn")) {
+            addHamburgerButton();
+          }
+        });
+        observer.observe(dropdown, { childList: true });
       };
       if (!addSidebarButton()) {
         let attempts = 0;
@@ -3202,11 +3221,7 @@ ${message}` : message;
           }
         }, 500);
       }
-      document.addEventListener("click", (e) => {
-        if (e.target.closest("#st-hamburger-btn")) {
-          setTimeout(addHamburgerButton, 100);
-        }
-      });
+      setupHamburgerObserver();
       return true;
     }
     async function waitForSillyTavern(maxAttempts = 30, interval = 500) {

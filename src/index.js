@@ -702,9 +702,13 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
     /**
      * CustomTheme 사이드바/햄버거 메뉴에 Chat Lobby 버튼 추가
      * - 사이드바(PC): 컨테이너 나타날 때까지 대기 후 한 번만 추가
-     * - 햄버거(모바일): 클릭 이벤트 기반으로 드롭다운 열릴 때 추가
+     * - 햄버거(모바일): MutationObserver로 드롭다운 변화 감지, CustomTheme이 empty() 후 다시 추가
      */
     function addToCustomThemeSidebar() {
+        // 중복 초기화 방지 플래그
+        if (window._chatLobbyCustomThemeInit) return true;
+        window._chatLobbyCustomThemeInit = true;
+        
         // 1. 사이드바 버튼 추가 (PC)
         const addSidebarButton = () => {
             const container = document.getElementById('st-sidebar-top-container');
@@ -727,8 +731,8 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
         // 2. 햄버거 버튼 추가 (모바일)
         const addHamburgerButton = () => {
             const dropdown = document.getElementById('st-hamburger-dropdown-content');
-            if (!dropdown) return;
-            if (document.getElementById('st-chatlobby-hamburger-btn')) return; // 이미 있음
+            if (!dropdown) return false;
+            if (document.getElementById('st-chatlobby-hamburger-btn')) return true; // 이미 있음
             
             const btn = document.createElement('div');
             btn.id = 'st-chatlobby-hamburger-btn';
@@ -740,13 +744,38 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
             btn.addEventListener('click', () => {
                 openLobby();
                 // 드롭다운 닫기
-                const dropdown = document.getElementById('st-hamburger-dropdown');
-                if (dropdown) dropdown.classList.remove('st-dropdown-open');
+                document.getElementById('st-hamburger-dropdown')?.classList.remove('st-dropdown-open');
             });
             dropdown.appendChild(btn);
+            return true;
         };
         
-        // 3. 사이드바: 즉시 시도 → 실패 시 polling (최대 20회, 10초)
+        // 3. 햄버거 MutationObserver 설정 (CustomTheme이 empty() 호출 시 다시 추가)
+        const setupHamburgerObserver = () => {
+            const dropdown = document.getElementById('st-hamburger-dropdown-content');
+            if (!dropdown) {
+                // 드롭다운 없으면 500ms 후 재시도 (최대 20회)
+                if (!setupHamburgerObserver._attempts) setupHamburgerObserver._attempts = 0;
+                if (++setupHamburgerObserver._attempts < 20) {
+                    setTimeout(setupHamburgerObserver, 500);
+                }
+                return;
+            }
+            
+            // 초기 추가
+            addHamburgerButton();
+            
+            // DOM 변화 감지 (CustomTheme이 empty() 후 다시 채울 때)
+            const observer = new MutationObserver(() => {
+                // 버튼이 없으면 다시 추가
+                if (!document.getElementById('st-chatlobby-hamburger-btn')) {
+                    addHamburgerButton();
+                }
+            });
+            observer.observe(dropdown, { childList: true });
+        };
+        
+        // 4. 사이드바: 즉시 시도 → 실패 시 polling (최대 20회, 10초)
         if (!addSidebarButton()) {
             let attempts = 0;
             const interval = setInterval(() => {
@@ -757,12 +786,8 @@ import { openDrawerSafely } from './utils/drawerHelper.js';
             }, 500);
         }
         
-        // 4. 햄버거: 클릭 이벤트 기반 (드롭다운은 매번 동적 생성됨)
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#st-hamburger-btn')) {
-                setTimeout(addHamburgerButton, 100);
-            }
-        });
+        // 5. 햄버거 Observer 설정
+        setupHamburgerObserver();
         
         return true;
     }
