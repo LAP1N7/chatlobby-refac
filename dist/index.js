@@ -36,7 +36,7 @@
   ));
 
   // src/config.js
-  var CONFIG, DEFAULT_DATA;
+  var CONFIG;
   var init_config = __esm({
     "src/config.js"() {
       CONFIG = {
@@ -75,24 +75,6 @@
           // 백그라운드 프리로딩 시작 지연
           toastDuration: 3e3
           // 토스트 알림 표시 시간
-        }
-      };
-      DEFAULT_DATA = {
-        folders: [
-          { id: "favorites", name: "\u2B50 \uC990\uACA8\uCC3E\uAE30", isSystem: true, order: 0 },
-          { id: "uncategorized", name: "\u{1F4C1} \uBBF8\uBD84\uB958", isSystem: true, order: 999 }
-        ],
-        chatAssignments: {},
-        favorites: [],
-        characterFavorites: [],
-        // 캐릭터 즐겨찾기 (avatar 목록)
-        sortOption: "recent",
-        filterFolder: "all",
-        collapsedFolders: [],
-        charSortOption: "name",
-        // 기본값: 이름순 (채팅수는 캐시 문제로 권장 안함)
-        autoFavoriteRules: {
-          recentDays: 0
         }
       };
     }
@@ -450,6 +432,24 @@ ${message}` : message;
 
   // src/data/storage.js
   init_config();
+  var DEFAULT_DATA = {
+    folders: [
+      { id: "favorites", name: "\u2B50 \uC990\uACA8\uCC3E\uAE30", isSystem: true, order: 0 },
+      { id: "uncategorized", name: "\u{1F4C1} \uBBF8\uBD84\uB958", isSystem: true, order: 999 }
+    ],
+    chatAssignments: {},
+    favorites: [],
+    characterFavorites: [],
+    // 캐릭터 즐겨찾기 (avatar 목록)
+    sortOption: "recent",
+    filterFolder: "all",
+    collapsedFolders: [],
+    charSortOption: "recent",
+    // 기본값: 최근 채팅순
+    autoFavoriteRules: {
+      recentDays: 0
+    }
+  };
   var StorageManager = class {
     constructor() {
       this._data = null;
@@ -1536,6 +1536,7 @@ ${message}` : message;
   init_notifications();
   init_config();
   async function renderPersonaBar() {
+    console.log("[RENDER] renderPersonaBar called", { stack: new Error().stack?.split("\n").slice(1, 4).join(" <- ") });
     const container = document.getElementById("chat-lobby-persona-list");
     if (!container) return;
     const cachedPersonas = cache.get("personas");
@@ -1673,7 +1674,9 @@ ${message}` : message;
     store.setCharacterSelectHandler(handler);
   }
   async function renderCharacterGrid(searchTerm = "", sortOverride = null) {
+    console.log("[RENDER] renderCharacterGrid called", { searchTerm, sortOverride, stack: new Error().stack?.split("\n").slice(1, 4).join(" <- ") });
     if (isRendering) {
+      console.log("[RENDER] renderCharacterGrid BLOCKED (already rendering)");
       pendingRender = { searchTerm, sortOverride };
       return;
     }
@@ -2029,6 +2032,7 @@ ${message}` : message;
     store.setChatHandlers(handlers);
   }
   async function renderChatList(character) {
+    console.log("[RENDER] renderChatList called", { character: character?.name, stack: new Error().stack?.split("\n").slice(1, 4).join(" <- ") });
     if (!character || !character.avatar) {
       console.error("[ChatList] Invalid character data:", character);
       return;

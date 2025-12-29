@@ -163,6 +163,7 @@ export function getCurrentCharacter() {
  * @returns {Promise<void>}
  */
 export async function renderChatList(character) {
+    console.log('[RENDER] renderChatList called', { character: character?.name, stack: new Error().stack?.split('\n').slice(1, 4).join(' <- ') });
     
     if (!character || !character.avatar) {
         console.error('[ChatList] Invalid character data:', character);
